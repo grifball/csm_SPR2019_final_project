@@ -15,3 +15,5 @@ The makefile will give a list of options as the default option (just running `ma
 You can also install python packages yourself and run it with:  
 
     $ python3 ./scott_synth.py
+
+I'm releasing this under the MIT license (https://opensource.org/licenses/MIT)
