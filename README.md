@@ -8,12 +8,11 @@ This project creates a song from a programming representation.
 Songs can have multiple tracks  
 Tracks can have multiple sequential chords  
 Chords can have independent lengths (time) and instruments  
-TODO: String representation of songs (loaded in through files)  
-TODO: Drums  
-  
-The makefile will give a list of options as the default option (just running `make`)  
-You can also install python packages yourself and run it with:  
+All of this is represented by a string format
 
-    $ python3 ./scott_synth.py
+The makefile will give a list of options as the default option (just running `make`)  
+You can also install python packages yourself and run a test with:  
+
+    $ python3 ./scott_synth.py mus_files/clair_de_lune.mus ./clair_de_lune.wav
 
 I'm releasing this under the MIT license (https://opensource.org/licenses/MIT)

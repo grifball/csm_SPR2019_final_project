@@ -1,23 +1,24 @@
 import sys
 import numpy as np
 from scipy.io import wavfile
-import wave, struct, math, random
 from random import random
-from numpy import c_
+import re
+from itertools import chain
 
 '''
 Scott Griffy's Computers Sound and Music project
-Read the README for more information
+This file is an executable that takes in a .mus file and outputs a .wav file
+You can test out this file with:
+$ echo "4eefg gfed ccde 4.e8d2d" > ode_to_joy.mus
+$ python3 scott_synth.py ode_to_joy.mus output.wav
+View the README.md file for more information
+TODO:
+  add key signatures
+    this would require adding in naturals and modifying ``chords" (just notes) so they know whether or not to be modified by the key signature after instructions are parsed
+  add drums
+  add arpeggios
 '''
 
-#chords = [[0,4,7],[9,12,4]]
-#chords = [[0],[1]]
-#chords = [[0],[2],[4],[5],[7],[9],[11],[12]]
-#chords = np.array([[0],[2],[4],[5],[7],[9],[11],[12]])+2
-#major3 = np.array([0,4]*12)
-#chords = major3+np.array([[0],[2],[4],[5],[7],[9],[11],[12]])
-#chords = np.array([[0],[2],[4],[5],[7],[9],[11],[12]])-12*1-2
-#chords = [[0,4,7,11],[0,4,7,11],[0,4,7,11]]
 class Chord():
   # This class represents multiple notes played at the same length
   def __init__(self, chord, instr, length, vol=1, env=np.array([.1,.1,.6,.2])):
@@ -27,23 +28,15 @@ class Chord():
     self.env = env
     self.envVols = np.array([1,.75])*vol
 
-# invert an array the represents a chord
+# invert the first note (make it an octave higher)
 def inv(chord, times=1):
   for time in range(0,times):
     chord = np.append(chord[1:],chord[0]+12)
   return chord
 
-# create a chord from notes which uses the guitar instrument
-def guitar(chord,l=1/4,v=1):
-  if len(chord.shape)>1 and chord.shape[1]>0:
-    chords = []
-    for ch in chord:
-      chords.append(guitar(ch, l, v))
-    return chords
-  return Chord(chord, 0, l, env=np.array([0, 0, 1, 0]))
-
 # create a chord from notes which uses the organ instrument
 def organ(chord,l=1/4,v=1):
+  # this accepts a single chord, or an array of chords (flattens itself appropriately)
   if len(chord.shape)>1 and chord.shape[1]>0:
     chords = []
     for ch in chord:
@@ -51,41 +44,197 @@ def organ(chord,l=1/4,v=1):
     return chords
   return Chord(chord, 1, l, vol=v)
 
-# create some symbols for chords
-CM7 = np.array([0,4,7,11])
-C7 = np.array([0,4,7,10])
-C6 = np.array([0,4,7,9])
-Cm7 = np.array([0,3,7,10])
-AM7 = CM7 - 3
-Am7 = Cm7 - 3
-Dm7 = Cm7 + 2
-GM7 = AM7 - 2 + 12
-G7 = C7 - 2 + 12
+# create a chord from notes which uses the guitar instrument
+def guitar(chord,l=1/4,v=1):
+  # like the organ, this accepts a single chord, or an array of chords
+  if len(chord.shape)>1 and chord.shape[1]>0:
+    chords = []
+    for ch in chord:
+      chords.append(guitar(ch, l, v))
+    return chords
+  return Chord(chord, 0, l, env=np.array([0, 0, 1, 0]))
 
-# setup first track
-chords1 = [organ(Dm7,1/2, v=1), organ(inv(G7)-12,1/4, v=1), organ(CM7,1/2, v=1), organ(C6,1/2, v=1)]
+# this is an instrument too I guess
+def rest(chord=None, l=1/4):
+  return Chord(np.array([]), 2, l, env=np.array([0, 0, 1, 0]), vol=0)
 
-# setup second track
-#chords2 = [guitar(Dm7,1/2), guitar(inv(G7)-12,1/4), guitar(CM7,1/4), guitar(C6,1/2)]
-F = np.array([5])
-Gs = np.array([8])
-C = np.array([0])
-G = np.array([7])
-guitarChords = np.array([Dm7,C+5,C+8,C+11,C+12,C+7,inv(C6)])
-chords2 = []
-for chord in guitarChords:
-  chords2.append(guitar(chord))
-chords2 = np.array(chords2)
+# map the instruments to indexes
+instrumentMap = [guitar, organ, rest]
 
-# combine tracks
-tracks = [chords1, chords2]
+if len(sys.argv)<3:
+  print("gimmie a .mus file to read and a .wav to write out to\nex:\n\tpython "+str(sys.argv[0])+" song_file.mus audio_file.wav")
+  sys.exit(1)
+
+# get arguments
+fileName = str(sys.argv[1])
+wavName = str(sys.argv[2])
+
+# Parsing out the .mus file
+songFile = open(fileName, 'r')
+
+# setup a map to convert instructions into chords
+chordOrderedMap = []
+# I added an agnostic function in case I change how chords are added to the map
+def addChordMap(instruc, arr):
+  chordOrderedMap.append([instruc, arr])
+# setup all the base chords
+typesOfChords = [
+  ['M3',np.array([0,4])],
+  ['m3',np.array([0,3])],
+  ['M2',np.array([0,2])],
+  ['m2',np.array([0,1])],
+  ['M',np.array([0,4,7])],
+  ['m',np.array([0,3,7])],
+  ['M7',np.array([0,4,7,11])],
+  ['7',np.array([0,4,7,10])],
+  ['6',np.array([0,4,7,9])],
+  ['m7',np.array([0,3,7,10])],
+  ['m6',np.array([0,3,7,9])]
+]
+# get all the distinct notes (use sharps)
+# lowercase and uppercase are used to relieve using octave changes frequently
+notesUpper = ['A','A#','B','C','C#','D','D#','E','F','F#','G','G#']
+notesLower = [note.lower() for note in notesUpper]
+allNotes = notesLower+notesUpper
+
+# this array converts all flats to sharps, makes scores easier to deal with
+flatReplace = [
+  ['a@', 'G#'], # yeah, this rolls over weird, just have to get used to it
+  ['b@', 'a#'],
+  ['c@', 'b'],
+  ['d@', 'c#'],
+  ['e@', 'd#'],
+  ['f@', 'e'],
+  ['g@', 'f#'],
+  ['A@', 'g#'],
+  ['B@', 'A#'],
+  ['C@', 'B'],
+  ['D@', 'C#'],
+  ['E@', 'D#'],
+  ['F@', 'E'],
+  ['G@', 'F#'],
+]
+
+# add in all the chords, with all the different roots
+#   in two octaves
+for note,interval in zip(allNotes,range(0,24)):
+  for chordName,chord in typesOfChords:
+    addChordMap(note+chordName, chord+interval)
+# a note is just a chord with only one note in it
+# map this in
+for note,interval in zip(allNotes,range(0,24)):
+  addChordMap(note, np.array([interval]))
+
+# ensure our chord maps are in order from longest to shortest (for parsing)
+chordOrderedMap = sorted(chordOrderedMap, key=lambda x: len(x[0]))
+chordOrderedMap = list(reversed(chordOrderedMap))
+
+# setup the parser state variables
+# state will continue between tracks (allows for a ``header"-like line)
+# that's why they're defined here, outside of the track loop (python may not care about this, but it makes it easier to understand)
+tempo = 120
+volume = 100
+instrumentFunc = organ
+octave = 0
+tracks = []
+speed = 1/4
+for trackString in songFile:
+  track = []
+  segments = [trackString]
+  # we will iteratively split the track string into chunks (or 'segments')
+  # by the time we're done, each chunk should contain only one 'instruction'
+  # we can then iterate over the instructions (keeping track of state) and create the track
+
+  # setup some utilities for parsing
+  timingRegex = r'^([0-9]+.?)' # I use this timing regex twice, so I decided to make it a variable
+  # this function allows us to parse out string tokens and leave finished chords alone (chords are immediately turned into arrays)
+  # It's not really parsing out because they're still in the segments. fixing this would make parsing easier (using tokens)
+  def parseOut(regex):
+    return list(chain.from_iterable([[segment] if not isinstance(segment,str) else re.split(regex, segment) for segment in segments]))
+  # this function is used to throw parsing errors
+  def parseError(instruc,fileIdx,fileName):
+    raise Exception("Parse error on "+str(instruc)+"\n instruction#: "+str(fileIdx)+"\n in file: "+fileName)
+  # parse out instrument changes
+  segments = parseOut(r'(i[0-9]+)')
+  # parse out rests
+  segments = parseOut(r'(r)')
+  # parse out octave changes
+  segments = parseOut(r'(o[-+]?[0-9]+)')
+  # parse out tempo changes
+  segments = parseOut(r'(t[0-9]+)')
+  # parse out volume changes (0-100 scale)
+  segments = parseOut(r'(v[0-9]+)')
+  # parse out inversions
+  segments = parseOut(r'(n[0-9]+)')
+  # replace flats with sharps
+  for flatFrom,flatTo in flatReplace:
+    segments = [segment.replace(flatFrom,flatTo) for segment in segments]
+  # parse out the chords
+  for chordInstruc,chord in chordOrderedMap:
+    # parse out this chord
+    segments = parseOut("("+chordInstruc+")")
+    # turn this chord directly into an array (preventing sub-strings from being parsed)
+    segments = [chord if instruc == chordInstruc else instruc for instruc in segments]
+  # parse timing changes
+  segments = parseOut(timingRegex)
+  # remove whitespace
+  segments = parseOut(r'[, \n]')
+  # remove any residue (empty instructions)
+  instructions = [instrc for instrc in segments if instrc is not None]
+  instructions = [instrc for instrc in segments if instrc not in ['']]
+  # all instructions should be parsed. now iterate over the instructions and create the track
+  for fileIdx,instruc in enumerate(instructions):
+    try:
+      if not isinstance(instruc,str):
+        # if we're not a string, we're a chord. add it
+        chord = instruc
+        # make sure to add the octave and set the note length and volume correctly
+        track.append(instrumentFunc(chord+octave*12,l=speed,v=volume/100))
+      elif re.match(timingRegex, instruc):
+        # change the length of notes
+        base = re.split(r'([0-9]+)', instruc)[1]
+        speed = 1/int(base)
+        if instruc[-1] == '.':
+          # if the last character is a dot, make it a dotted note
+          speed *= 1.5
+      elif instruc[0] == 'i':
+        # change the instrument being played
+        instrumentFunc = instrumentMap[int(instruc[1:])]
+      elif instruc[0] == 'n':
+        # this modifies the last chord
+        track[-1] = inv(track[-1],int(instruc[1:])-1)
+      elif instruc[0] == 'r':
+        # insert a rest (at the current note length)
+        track.append(rest(l=speed))
+      elif instruc[0] == 'o':
+        # change the octave
+        if instruc[1] == '-' or instruc[1] == '+':
+          # relative changes
+          octave += int(instruc[1:])
+        else:
+          # absolute change
+          octave = int(instruc[1:])-4
+      elif instruc[0] == 't':
+        # change the BPM (tempo)
+        # this is global, so it will change the whole song (uses last one)
+        tempo = int(instruc[1:])
+      elif instruc[0] == 'v':
+        # change the volume
+        volume = int(instruc[1:])
+      else:
+        parseError(instruc,fileIdx,fileName)
+    except Exception as e:
+      # catch any error here
+      print(e)
+      parseError(instruc,fileIdx,fileName)
+  tracks.append(track)
 
 # create an array of samples (song) 
 song = np.array([])
 for chords in tracks:
   # iterate through reach track to find samples
   fs = 44100.0 # frames per second (frames=samples)
-  noteDur = 3 # duration (in seconds) of a whole note
+  noteDur = 60/tempo*4 # duration (in seconds) of a whole note
   noteF = fs*noteDur # f is for frames (# frames for a whole note)
   # find the total number of samples in this track
   totalF = 0
@@ -112,7 +261,7 @@ for chords in tracks:
       # get the note's frequency
       f = frequency*2**(t/12)/2
       # check which instrument it is
-      if chord.instr == 1: # organe
+      if chord.instr == 1: # organ
         # FM synthesize
         t = np.arange(thisChordF)
         # these parameters sound alright
@@ -136,7 +285,7 @@ for chords in tracks:
           pluckIdx = idx + N
           Y[pluckIdx] = (waveTable[idx] if idx<N else 0) + 0.5*(Y[idx]+Y[idx+1])
         # add this pluck to the track samples (last bit helps bring out chords)
-        trackSamples[firstSampleIdx+delay:lastSampleIdx] += Y[N:]/numberTones*(numberTones**1.001)
+        trackSamples[firstSampleIdx+delay:lastSampleIdx] += Y[N:]/numberTones*(numberTones**1.00)
     # do enveloping
     segLengths = np.floor(chord.env*thisChordF).astype(np.int)
     segVols = chord.envVols # assume we start and end at zero
@@ -153,7 +302,7 @@ for chords in tracks:
         trackSamples[lower:upper] = trackSamples[lower:upper]*segVols[1]
       elif segi == 3: # release
         trackSamples[lower:upper] = trackSamples[lower:upper]*np.linspace(segVols[1],0,segLength)
-  # add this to the song
+  # add this track to the song
   maxLength = max(trackSamples.shape[0], song.shape[0])
   newSong = np.zeros(maxLength)
   newSong[0:song.shape[0]] += song
@@ -161,5 +310,4 @@ for chords in tracks:
   song = newSong
 
 # write out the wav file
-wavfile.write("sound.wav", int(fs), song)
-print("Written to ./sound.wav")
+wavfile.write(wavName, int(fs), song)
