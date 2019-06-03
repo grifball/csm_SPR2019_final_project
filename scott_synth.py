@@ -80,7 +80,7 @@ def addChordMap(instruc, arr):
   chordOrderedMap.append([instruc, arr])
 # setup all the base chords
 typesOfChords = [
-  ['-5',np.array([0,7])],
+  ['-5',np.array([0,7])], # I kinda hacked some of these in to write the songs
   ['-#5',np.array([0,8])],
   ['-4',np.array([0,5])],
   ['-#4',np.array([0,6])],

@@ -80,7 +80,7 @@ All of this is represented by a string format (defined above).
 
 Currently, I use an FM synth algorithm to create the organ music and a Karplus-Strong algorithm to create the guitar noise. An "ADSR" envelope (attack, decay, sustain, release) is applied to each instrument. I also used an FIR filter (low-pass). All of the algorithms were coded by me using resources on the class website with the exception of the Karplus-Strong algorithm, which I found in "Extensions of the Karplus-Strong Plucked String Algorithm" by Jaffe and Smith (1983).
 
-The parsing code will fall apart if any more features are added. I suggest using a real parser/lexer and tokens.  
+The code that parses songs isn't written very well and you'll have a lot of problems trying to add new instructions. The order in which instructions are parsed contributes to the correctness of parsing (beyond operator priority). I suggest using a real parser/lexer and tokens.  
 
 The makefile will give a list of options as the default option (just running `make`)  
 You can also install python packages yourself and run a test with:  
