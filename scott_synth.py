@@ -26,7 +26,7 @@ class Chord():
     self.instr = instr
     self.length = length
     self.env = env # this array defines the length of segments in the envelope (attack, decay, sustain, release)
-    self.lowPass = 1
+    self.lowPass = lowPass
     self.envVols = np.array([1,.75])*vol # this array defines the volume of the envelope at different points (attack height, sustain)
 
 # invert the first note (make it an octave higher)
@@ -43,7 +43,7 @@ def organ(chord,l=1/4,v=1):
     for ch in chord:
       chords.append(organ(ch, l, v))
     return chords
-  return Chord(chord, 1, l, vol=v, lowPass=20)
+  return Chord(chord, 1, l, vol=v, lowPass=5)
 
 # create a chord from notes which uses the guitar instrument
 def guitar(chord,l=1/4,v=1):
@@ -53,7 +53,7 @@ def guitar(chord,l=1/4,v=1):
     for ch in chord:
       chords.append(guitar(ch, l, v))
     return chords
-  return Chord(chord, 0, l, env=np.array([0, 0, 1, 0]), lowPass=1)
+  return Chord(chord, 0, l, env=np.array([0, 0, 1, 0]), lowPass=2)
 
 # this is an instrument too I guess
 def rest(chord=None, l=1/4):
