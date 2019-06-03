@@ -67,13 +67,18 @@ These are instructions that modify the whole song (not just a single track or fo
 `l`: Change the global volume. After the song is complete, the volume is normalized (so the max is '1'). If a softer song is desired, this global volume can do that, whereas changing the volume of notes with the `v` instruction cannot. This global volume ranges from 0-100. If you specify a value higher than 100 your wav file will have clipping.  
 I'd suggest putting these global instructions on their own "track" (line) at the start of the song.  
 You CAN'T supply decimals to any of these instructions.  
+Another trick is to split .mus files up into different "tracks" but have many whole rests at the start of each line. This prevents word wrapping issues in editors.  
+You can also start a line with `//` to add comments (helpful for testing songs as well, just comment out the beginning of the song to the part you're testing).  
+Note: The `//` must come at the start of the line, otherwise the parser will fail.  
 
-## Contributing ##
+## Contributing/Details ##
 As far as the programming, the internal structure of songs is setup like so:  
 Songs can have multiple tracks.  
 Tracks can have multiple sequential chords.  
 Chords can have independent lengths (time) and instruments. Each chord can also modify instrument parameters (like envelope) but this is unused.  
 All of this is represented by a string format (defined above).  
+
+Currently, I use an FM synth algorithm to create the organ music and a Karplus-Strong algorithm to create the guitar noise. An "ADSR" envelope (attack, decay, sustain, release) is applied to each instrument. I also used an FIR filter (low-pass). All of the algorithms were coded by me using resources on the class website with the exception of the Karplus-Strong algorithm, which I found in "Extensions of the Karplus-Strong Plucked String Algorithm" by Jaffe and Smith (1983).
 
 The parsing code will fall apart if any more features are added. I suggest using a real parser/lexer and tokens.  
 
