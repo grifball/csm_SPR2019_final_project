@@ -25,8 +25,8 @@ class Chord():
     self.chord = chord
     self.instr = instr
     self.length = length
-    self.env = env
-    self.envVols = np.array([1,.75])*vol
+    self.env = env # this array defines the length of segments in the envelope (attack, decay, sustain, release)
+    self.envVols = np.array([1,.75])*vol # this array defines the volume of the envelope at different points (attack height, sustain)
 
 # invert the first note (make it an octave higher)
 def inv(chord, times=1):
@@ -144,6 +144,7 @@ instrumentFunc = organ
 octave = 0
 tracks = []
 speed = 1/4
+globalVol = 100
 for trackString in songFile:
   track = []
   segments = [trackString]
@@ -162,6 +163,8 @@ for trackString in songFile:
     raise Exception("Parse error on "+str(instruc)+"\n instruction#: "+str(fileIdx)+"\n in file: "+fileName)
   # parse out instrument changes
   segments = parseOut(r'(i[0-9]+)')
+  # parse out global volume changes
+  segments = parseOut(r'(l[0-9]+)')
   # parse out rests
   segments = parseOut(r'(r)')
   # parse out octave changes
@@ -227,6 +230,9 @@ for trackString in songFile:
       elif instruc[0] == 'v':
         # change the volume
         volume = int(instruc[1:])
+      elif instruc[0] == 'l':
+        # change the global volume
+        globalVol = int(instruc[1:])
       else:
         parseError(instruc,fileIdx,fileName)
     except Exception as e:
@@ -290,8 +296,9 @@ for chords in tracks:
         for idx in range(0,thisChordF-delay):
           pluckIdx = idx + N
           Y[pluckIdx] = (waveTable[idx] if idx<N else 0) + 0.5*(Y[idx]+Y[idx+1])
-        # add this pluck to the track samples (last bit helps bring out chords)
-        trackSamples[firstSampleIdx+delay:lastSampleIdx] += Y[N:]/numberTones*(numberTones**1.00)
+        # add this pluck to the track samples
+        #   the last bit helps bring out chords, if it's set to '1', it's disabled. Test it out by setting to 1.01 or something
+        trackSamples[firstSampleIdx+delay:lastSampleIdx] += Y[N:]/numberTones*(numberTones**1)
     # do FIR filtering (low-pass)
     n = trackSamples[firstSampleIdx:lastSampleIdx]
     n_1 = np.concatenate(([0],trackSamples[firstSampleIdx:lastSampleIdx-1]))
@@ -316,8 +323,17 @@ for chords in tracks:
   maxLength = max(trackSamples.shape[0], song.shape[0])
   newSong = np.zeros(maxLength)
   newSong[0:song.shape[0]] += song
-  newSong[0:trackSamples.shape[0]] += trackSamples/len(tracks)
+  newSong[0:trackSamples.shape[0]] += trackSamples
   song = newSong
+
+# normalize the volume
+maxVol = song[np.argmax(np.abs(song))]
+print(maxVol)
+if maxVol != 0: # this would mean the song is empty
+  song = song/maxVol
+
+# apply the global volume
+song = song*(globalVol/100)
 
 # write out the wav file
 wavfile.write(wavName, int(fs), song)
