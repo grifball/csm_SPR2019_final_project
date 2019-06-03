@@ -79,6 +79,10 @@ def addChordMap(instruc, arr):
   chordOrderedMap.append([instruc, arr])
 # setup all the base chords
 typesOfChords = [
+  ['-5',np.array([0,7])],
+  ['-#5',np.array([0,8])],
+  ['-4',np.array([0,5])],
+  ['-#4',np.array([0,6])],
   ['M3',np.array([0,4])],
   ['m3',np.array([0,3])],
   ['M2',np.array([0,2])],
@@ -86,8 +90,10 @@ typesOfChords = [
   ['M',np.array([0,4,7])],
   ['m',np.array([0,3,7])],
   ['M7',np.array([0,4,7,11])],
-  ['7',np.array([0,4,7,10])],
-  ['6',np.array([0,4,7,9])],
+  ['7',np.array([0,4,7,10])], # this will probably cause ambiguities if a 7th note if ever used... oh well
+  ['-7',np.array([0,10])],
+  ['M6',np.array([0,4,7,9])],
+  ['-6',np.array([0,9])],
   ['m7',np.array([0,3,7,10])],
   ['m6',np.array([0,3,7,9])]
 ]
@@ -202,7 +208,7 @@ for trackString in songFile:
         instrumentFunc = instrumentMap[int(instruc[1:])]
       elif instruc[0] == 'n':
         # this modifies the last chord
-        track[-1] = inv(track[-1],int(instruc[1:])-1)
+        track[-1].chord = inv(track[-1].chord,int(instruc[1:])-1)
       elif instruc[0] == 'r':
         # insert a rest (at the current note length)
         track.append(rest(l=speed))
@@ -286,6 +292,10 @@ for chords in tracks:
           Y[pluckIdx] = (waveTable[idx] if idx<N else 0) + 0.5*(Y[idx]+Y[idx+1])
         # add this pluck to the track samples (last bit helps bring out chords)
         trackSamples[firstSampleIdx+delay:lastSampleIdx] += Y[N:]/numberTones*(numberTones**1.00)
+    # do FIR filtering (low-pass)
+    n = trackSamples[firstSampleIdx:lastSampleIdx]
+    n_1 = np.concatenate(([0],trackSamples[firstSampleIdx:lastSampleIdx-1]))
+    trackSamples[firstSampleIdx:lastSampleIdx] = (n+n_1)/2
     # do enveloping
     segLengths = np.floor(chord.env*thisChordF).astype(np.int)
     segVols = chord.envVols # assume we start and end at zero
