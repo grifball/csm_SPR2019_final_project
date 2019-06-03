@@ -309,13 +309,19 @@ for trackString in songFile:
         n_1 = np.concatenate(([0],trackSamples[firstSampleIdx:lastSampleIdx-1]))
         trackSamples[firstSampleIdx:lastSampleIdx] = (n+n_1)/2
       # do enveloping
+      # get the length of each segment of the envelop (attack, decay, sustain, release)
+      # this is supplied by the instrument (in the chord)
       segLengths = np.floor(chord.env*thisChordF).astype(np.int)
-      segVols = chord.envVols # assume we start and end at zero
+      # the instrument also defines how loud each part of the envelope
+      segVols = chord.envVols # assume we start and end at zero volume
+      # iterate over the segments and apply that part of the envelope
       prevSegLength = firstSampleIdx
       for segi,segLength in enumerate(segLengths):
+        # find the range of this envelope, summing what we've already modified
         lower = prevSegLength 
         upper = lower + segLength
         prevSegLength = upper
+        # find which envelope we're in and apply it
         if segi == 0: # attack
           trackSamples[lower:upper] = trackSamples[lower:upper]*np.linspace(0,segVols[0],segLength)
         elif segi == 1: # decay
@@ -325,7 +331,9 @@ for trackString in songFile:
         elif segi == 3: # release
           trackSamples[lower:upper] = trackSamples[lower:upper]*np.linspace(segVols[1],0,segLength)
     # add this track to the song
+    # Because tracks can be of varying lengths, you have to find the maximum length here
     maxLength = max(trackSamples.shape[0], song.shape[0])
+    # to get numpy to play nice, all arrays must be the same lengths
     newSong = np.zeros(maxLength)
     newSong[0:song.shape[0]] += song
     newSong[0:trackSamples.shape[0]] += trackSamples/len(tracks)

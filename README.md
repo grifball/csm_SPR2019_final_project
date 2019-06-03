@@ -39,7 +39,7 @@ Capitalizing these chords will shift them up an octave:
 
     CMGMAmFM
 
-Using the 'o' instruction ('o' followed by a number) will shift the base octave up or down. An implied 'o4' is at the start of each file.  
+Using the '`o`' instruction ('`o`' followed by a number) will shift the base octave up or down. An implied '`o4`' is at the start of each file.  
 This file is equivalent to `cMgMamfM`:  
 
     o3CMGMAmFM
