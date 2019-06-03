@@ -2,7 +2,7 @@ SHELL := /bin/bash
 default:
 	@echo -e "to test:\n\tmake example\nto setup build env:\n\tmake build"
 example:
-	python3 scott_synth.py
+	python3 scott_synth.py mus_files/clair_de_lune.mus ./clair_de_lune.wav
 build:
 	python3 -m venv ./venv
 	source ./venv/bin/activate && python3 -m pip install -r ./requirements.txt
