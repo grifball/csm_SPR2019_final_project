@@ -4,6 +4,7 @@ from scipy.io import wavfile
 from random import random
 import re
 from itertools import chain
+import struct
 
 '''
 Scott Griffy's Computers Sound and Music project
@@ -63,7 +64,8 @@ def rest(chord=None, l=1/4):
 instrumentMap = [guitar, organ, rest]
 
 if len(sys.argv)<3:
-  print("gimmie a .mus file to read and a .wav to write out to\nex:\n\tpython "+str(sys.argv[0])+" song_file.mus audio_file.wav")
+  print("gimmie a .mus file to read and a .wav to write out to\nex:\n\tpython "+str(sys.argv[0])+" song_file.mus output.wav")
+  print("or, specifying '-' in place of files will read from stdin and/or write to stdout\nex:\n\techo \"CMGMAmFM\" | python "+str(sys.argv[0])+" - - | aplay -f cd -r 22050")
   sys.exit(1)
 
 # get arguments
@@ -71,7 +73,12 @@ fileName = str(sys.argv[1])
 wavName = str(sys.argv[2])
 
 # Parsing out the .mus file
-songFile = open(fileName, 'r')
+if fileName == '-':
+  # read from stdin instead of a file
+  songFile = sys.stdin
+else:
+  # read from a file
+  songFile = open(fileName, 'r')
 
 # setup a map to convert instructions into chords
 chordOrderedMap = []
@@ -215,7 +222,7 @@ for trackString in songFile:
           instrumentFunc = instrumentMap[int(instruc[1:])]
         elif instruc[0] == 'n':
           # this modifies the last chord
-          track[-1].chord = inv(track[-1].chord,int(instruc[1:])-1)
+          track[-1].chord = inv(track[-1].chord,int(instruc[1:]))
         elif instruc[0] == 'r':
           # insert a rest (at the current note length)
           track.append(rest(l=speed))
@@ -348,4 +355,10 @@ if maxVol != 0: # this would mean the song is empty
 song = song*(globalVol/100)
 
 # write out the wav file
-wavfile.write(wavName, int(fs), song)
+if wavName == '-':
+  # write to stdout in 22050 hertz, signed little endian 16bit format
+  for sample in song:
+    sys.stdout.buffer.write(struct.pack('h', int(2**15*sample-1)))
+else:
+  # write out a wav file
+  wavfile.write(wavName, int(fs), song)
