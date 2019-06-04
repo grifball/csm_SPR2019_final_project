@@ -1,11 +1,11 @@
 // The start of Foreplay/Long time by Bostom
-t200,
+t190,
 
 i1,o4,12 D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C
-i0,      1rr                                       o1 4B@CD@CB@A@gfCD@B@E@FfFF
+i0,      1rr                                         o1 4B@CD@CB@A@gfCD@B@E@FfFF
 
 1rrrrrr i1,o4,12 D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C D@fD@E@A@C
-1rrrrrr i0,                                             o1 4B@CB@C,D@A@D@A@,D@A@B@f,G@D@E@F
+1rrrrrr i0,                                                  o1 4B@CB@C,D@A@D@A@,D@A@B@f,G@D@E@F
 
-1rrrrrrrrrr i1,o3 2.B@Mn1 4A@Mn2 2.D@Mn1 4A@Mn2 2.B@Mn2 4FM 2.D@Mn2 4FM B@Mn1 A@Mn2 D@Mn1 A@Mn2 B@Mn1 A@Mn2 D@Mn1 A@Mn2 B@Mn1 A@Mn2 o3 2G@M  FM
-1rrrrrrrrrr i0,o1 2.B@    4A@    2.D@    4A@    2.B@    4A@ 2.D@    4A@ B@    A@    D@    A@    B@    A@    D@    A@    B@    A@       2g@   F
+1rrrrrrrrrr i1,o3 2.B@Mn1 4A@Mn2 2.D@Mn1 4A@Mn2 2.B@Mn2 4FM 2.D@Mn2 4FM B@Mn1 A@Mn2 D@Mn1 A@Mn2 B@Mn1 A@Mn2 D@Mn1 A@Mn2 B@Mn1 A@Mn2 o3 G@MG@M FMFMFMFM 1B@M
+1rrrrrrrrrr i0,o1 2.B@    4A@    2.D@    4A@    2.B@    4A@ 2.D@    4A@ B@    A@    D@    A@    B@    A@    D@    A@    B@    A@       g@g@   FFFF     1B@

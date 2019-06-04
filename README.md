@@ -67,15 +67,18 @@ Here are all (non-global) instructions:
 `r`: insert a rest (uses current note length, so 4r will insert a quarter note rest)  
 `o`: Change the octave (example above). o4 will bring us to a "normal" octave (where 'a' is 440 hertz). You can also do relative changes with `o-1` and `o+1`.  
 `v`: Change the volume of following notes. This ranges from 0-100. You can push it higher, it's all relative.  
+You CAN'T supply decimals to any these instructions.  
 ## Global instructions ##
 These are instructions that modify the whole song (not just a single track or following notes). If the same global instruction is used in a song, the earlier ones will be discarded.  
 `t`: Change the tempo (in BPM). Defaults to 120  
 `l`: Change the global volume. After the song is complete, the volume is normalized (so the max is '1'). If a softer song is desired, this global volume can do that, whereas changing the volume of notes with the `v` instruction cannot. This global volume ranges from 0-100. If you specify a value higher than 100 your wav file will have clipping.  
-I'd suggest putting these global instructions on their own "track" (line) at the start of the song.  
-You CAN'T supply decimals to any of these instructions.  
-Another trick is to split .mus files up into different "tracks" but have many whole rests at the start of each line. This prevents word wrapping issues in editors.  
-You can also start a line with `//` to add comments (helpful for testing songs as well, just comment out the beginning of the song to the part you're testing).  
-Note: The `//` must come at the start of the line, otherwise the parser will fail.  
+Again, you CAN'T supply decimals to any these instructions.  
+
+## Song writing tricks/details ##
+I'd suggest putting global instructions on their own "track" (line) at the start of the song.  
+One trick is to split .mus files up into different "tracks" but have many whole rests at the start of each line. This prevents word wrapping issues in editors. An example of this can be seen in the `mus_files/foreplay_long_time.mus` file  
+You can also start a line with `//` to add comments (helpful for testing songs as well, just comment out the beginning of the song up to the part you're testing).  
+Note: The `//` must come at the start of the line, otherwise the parser will fail. Comments can start on any line in the file.  
 
 ## Contributing/Details ##
 As far as the programming, the internal structure of songs is setup like so:  
