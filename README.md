@@ -89,7 +89,7 @@ All of this is represented by a string format (defined above).
 
 Currently, I use an FM synth algorithm to create the organ music and a Karplus-Strong algorithm to create the guitar noise. An "ADSR" envelope (attack, decay, sustain, release) is applied to each instrument. I also used an FIR filter (low-pass). All of the algorithms were coded by me using resources on the class website with the exception of the Karplus-Strong algorithm, which I found in "Extensions of the Karplus-Strong Plucked String Algorithm" by Jaffe and Smith (1983).
 
-The code that parses songs isn't written very well and you'll have a lot of problems trying to add new instructions. The order in which instructions are parsed contributes to the correctness of parsing (beyond operator priority). The nature of rigid parsing lead to some poor design choices like rolling over '`a@`' to be the highest note in the scale. I suggest using a real parser/lexer and tokens for future work.  
+The code that parses songs isn't written very well and you'll have a lot of problems trying to add new instructions. The order in which instructions are parsed contributes to the correctness of parsing (beyond operator priority). The nature of this rigid parsing lead to some poor design choices like rolling over '`a@`' to be the highest note in the scale and prevents matching braces/parenthesis from being used. I suggest using a real parser/lexer and tokens for future work.  
 
 The makefile will give a list of options as the default option (just running `make`)  
 You can also install python packages yourself and run a test with:  
@@ -100,7 +100,7 @@ You can also use dashes to indicate reading from stdin and writing to stdout:
 
     $ echo "2t120i0o3CMGMAm4FMfMn1,2CM" | python scott_synth.py - - | aplay -f cd -r 22050
 
-Also, I often use `ffmpeg` to convert them to mp3's:
+Also, I often use `ffmpeg` to convert wav files to mp3 files:
 
     $ python scott_synth.py mus_files/foreplay_long_time.mus ./foreplay_long_time.wav && yes | ffmpeg -i ./foreplay_long_time.wav foreplay_long_time.mp3
 
