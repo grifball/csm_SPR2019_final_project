@@ -98,10 +98,10 @@ You can also install python packages yourself and run a test with:
 
 You can also use dashes to indicate reading from stdin and writing to stdout:
 
-    $ echo "2t120i0o3CMGMAm4FMfMn1,2CM" | python test.py - - | aplay -f cd -r 22050
+    $ echo "2t120i0o3CMGMAm4FMfMn1,2CM" | python scott_synth.py - - | aplay -f cd -r 22050
 
 Also, I often use `ffmpeg` to convert them to mp3's:
 
-    $ python test.py mus_files/foreplay_long_time.mus ./foreplay_long_time.wav && yes | ffmpeg -i ./foreplay_long_time.wav foreplay_long_time.mp3
+    $ python scott_synth.py mus_files/foreplay_long_time.mus ./foreplay_long_time.wav && yes | ffmpeg -i ./foreplay_long_time.wav foreplay_long_time.mp3
 
 I'm releasing this under the MIT license (https://opensource.org/licenses/MIT)
